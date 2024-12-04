@@ -7,4 +7,4 @@ file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(f
 for file_name in file_list:
     image = cv2.imread(f"stanford_background_dataset/images/{file_name}")
     gaussian_blurred = cv2.GaussianBlur(image, (5, 5), 1.0)
-cv2.imwrite(f"stanford_background_dataset/preprocessing1/{file_name}", gaussian_blurred)
+    cv2.imwrite(f"stanford_background_dataset/preprocessing1/{file_name}", gaussian_blurred)
