@@ -168,3 +168,4 @@ cython_debug/
 .jpg
 stanford_background_dataset/
 *.pdf
+.idea
