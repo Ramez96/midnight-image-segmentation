@@ -1,16 +1,41 @@
 # Import required libraries
 import torch
+import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 
+class YourModel(nn.Module):
+    def __init__(self, num_classes=9, pretrained=True):
+        super(YourModel, self).__init__()
+        # Load the pretrained DeepLabV3 with ResNet101 backbone
+        self.model = models.segmentation.deeplabv3_resnet101(pretrained=pretrained)
+        
+        # Modify the classifier to match the number of classes
+        self.model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)  # 9 classes
+
+    def forward(self, x):
+        return self.model(x)['out']
+
+    def load_weights(self, model_path):
+        """Load pre-trained weights into the model."""
+        self.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+
+    def evaluate(self):
+        """Set the model to evaluation mode."""
+        self.eval()
+
 # ==============================
 # Step 1: Load the Pre-trained DeepLabV3 Model
 # ==============================
-model = models.segmentation.deeplabv3_resnet101(pretrained=True)  # Load model
-model.eval()  # Set model to evaluation mode
+model_path = "your_model.pth"  # Path to your model
+num_classes = 9  # Number of classes your model was trained for
 
+# Load your model (make sure your model definition matches)
+model = YourModel(num_classes=num_classes)
+model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))  # Load weights
+model.eval()  # Set to evaluation mode
 # ==============================
 # Step 2: Preprocess the Input Image
 # ==============================
