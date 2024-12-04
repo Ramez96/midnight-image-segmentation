@@ -5,9 +5,9 @@ from segmentation_training import create_model, train_segmentation_model, get_da
 
 # Set dataset paths
 train_image_dir = "dataset/train/images"
-train_mask_dir = "dataset/train/masks"
+train_mask_dir = "dataset/train/labels"
 val_image_dir = "dataset/val/images"
-val_mask_dir = "dataset/val/masks"
+val_mask_dir = "dataset/val/labels"
 
 # Get data loaders
 train_loader, val_loader = get_data_loaders(
