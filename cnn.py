@@ -75,7 +75,7 @@ def get_deeplabv3_model(num_classes):
 # Training Loop
 # -------------------------------
 def train_model(model, train_loader, val_loader, num_epochs, device):
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(ignore_index=-1)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     model = model.to(device)
@@ -89,7 +89,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device):
             optimizer.zero_grad()
 
             outputs = model(images)['out']
-            loss = criterion(outputs, labels)
+            loss = criterion(outputs, labels.squeeze(1))
             loss.backward()
             optimizer.step()
 
@@ -151,13 +151,15 @@ def visualize_sample(model, dataset, device):
 if __name__ == "__main__":
     # Paths to dataset
     image_dir = "./stanford_background_dataset/images"
-    label_dir = "./stanford_background_dataset/labels"
+    label_dir = "./stanford_background_dataset/layers"
 
     # Prepare data
     train_loader, val_loader = prepare_data(image_dir, label_dir)
-
+    for images, labels in train_loader:
+        print("Unique labels in batch:", torch.unique(labels))
+        break
     # Load model
-    num_classes = 10  # Replace with the actual number of classes in your dataset
+    num_classes = 100  # Replace with the actual number of classes in your dataset
     model = get_deeplabv3_model(num_classes)
 
     # Train model
@@ -168,3 +170,4 @@ if __name__ == "__main__":
     # Visualize results
     dataset = StanfordBackgroundDataset(image_dir, label_dir, transform=transforms.ToTensor())
     visualize_sample(model, dataset, device)
+
