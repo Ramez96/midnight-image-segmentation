@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+import torch.nn.functional as F
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,18 +10,27 @@ import numpy as np
 class YourModel(nn.Module):
     def __init__(self, num_classes=9, pretrained=True):
         super(YourModel, self).__init__()
-        # Load the pretrained DeepLabV3 with ResNet101 backbone
-        self.model = models.segmentation.deeplabv3_resnet101(pretrained=pretrained)
+         # Load the DeepLabV3 model
+        deeplab = models.segmentation.deeplabv3_resnet101(pretrained=pretrained)
         
+        # Extract the backbone and classifier
+        self.backbone = deeplab.backbone  # Matches the key names in your .pth file
+        self.classifier = deeplab.classifier
+
         # Modify the classifier to match the number of classes
-        self.model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)  # 9 classes
+        self.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
 
     def forward(self, x):
-        return self.model(x)['out']
+        # Use the backbone and classifier directly
+        features = self.backbone(x)
+        output = self.classifier(features['out'])
+        return output
 
     def load_weights(self, model_path):
         """Load pre-trained weights into the model."""
-        self.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        # Load the state_dict directly into the model
+        state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+        self.load_state_dict(state_dict,strict = False)
 
     def evaluate(self):
         """Set the model to evaluation mode."""
@@ -29,21 +39,16 @@ class YourModel(nn.Module):
 # ==============================
 # Step 1: Load the Pre-trained DeepLabV3 Model
 # ==============================
-model_path = "your_model.pth"  # Path to your model
-num_classes = 9  # Number of classes your model was trained for
-
-# Load your model (make sure your model definition matches)
-model = YourModel(num_classes=num_classes)
-model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))  # Load weights
+model = YourModel(num_classes=9)
+model.load_weights("./segmentation_model.pth")
 model.eval()  # Set to evaluation mode
 # ==============================
 # Step 2: Preprocess the Input Image
 # ==============================
 # Define preprocessing pipeline
 preprocess = transforms.Compose([
-    transforms.Resize((224, 224)),  # Resize image to model's input size
-    transforms.ToTensor(),  # Convert image to tensor
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
+    transforms.Resize((240, 320)),
+    transforms.ToTensor()
 ])
 
 # Load an image
@@ -55,10 +60,12 @@ input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
 # Step 3: Perform Segmentation
 # ==============================
 with torch.no_grad():
-    output = model(input_tensor)["out"][0]  # Get output predictions
+    output = model(input_tensor)  # Raw model output is an OrderedDict
+    
 
-# Convert to segmentation map
-output_predictions = torch.argmax(output, dim=0).numpy()  # Class IDs
+    # Resize output to match the original image size
+    output_resized = F.interpolate(output, size=(240, 320), mode="bilinear", align_corners=False)
+    predicted_labels = torch.argmax(output_resized, dim=1).squeeze(0).cpu().numpy()
 
 # ==============================
 # Step 4: Visualize the Results
@@ -99,7 +106,7 @@ def decode_segmap(segmentation, num_classes=21):
     return np.stack([r, g, b], axis=2)
 
 # Decode segmentation map
-segmentation_map = decode_segmap(output_predictions)
+segmentation_map = decode_segmap(predicted_labels)
 
 # Show the original and segmented images
 plt.figure(figsize=(10, 5))
@@ -111,7 +118,7 @@ plt.title("Original Image")
 
 # Segmented image
 plt.subplot(1, 2, 2)
-plt.imshow(segmentation_map)
+plt.imshow(segmentation_map)  # Use a colormap for visualization
 plt.title("Segmented Image")
 
 plt.show()
