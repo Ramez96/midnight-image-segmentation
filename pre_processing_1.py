@@ -2,7 +2,7 @@ import cv2
 import os
 
 def gaussian(image):
-    return cv2.GaussianBlur(image, (5, 5), 1.0)
+    return cv2.GaussianBlur(image, (5, 5), 2.0)
 
 # gaussian blur
 folder_path = "stanford_background_dataset/images"
