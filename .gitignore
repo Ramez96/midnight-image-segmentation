@@ -169,3 +169,5 @@ cython_debug/
 stanford_background_dataset/
 *.pdf
 .idea
+dataset/*
+dataset.zip
