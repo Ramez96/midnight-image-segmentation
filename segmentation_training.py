@@ -55,7 +55,7 @@ class SegmentationDataset(Dataset):
 def create_model(num_classes=9, pretrained=True):
     """Creates and returns a DeepLabV3 model with a ResNet-101 backbone."""
     print(f"Creating DeepLabV3 model with {num_classes} classes...")
-    model = models.segmentation.deeplabv3_resnet101(pretrained=pretrained)
+    model = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
     model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)  # Adjust for num_classes
     return model
 

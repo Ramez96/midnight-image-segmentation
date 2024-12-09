@@ -11,7 +11,7 @@ class YourModel(nn.Module):
     def __init__(self, num_classes=9, pretrained=True):
         super(YourModel, self).__init__()
          # Load the DeepLabV3 model
-        deeplab = models.segmentation.deeplabv3_resnet101(pretrained=pretrained)
+        deeplab = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
         
         # Extract the backbone and classifier
         self.backbone = deeplab.backbone  # Matches the key names in your .pth file
