@@ -3,20 +3,20 @@ import random
 import shutil
 
 # Define paths for images and labels
-image_dir = './stanford_background_dataset/images'
-label_dir = './stanford_background_dataset/regions'
+image_dir = '../dataset/images'
+label_dir = './dataset/regions'
 
 # Define output directories for train, validation, and test
 output_image_dirs = {
-    'train': './dataset/train/images',
-    'val': './dataset/val/images',
-    'test': './dataset/test/images'
+    'train': '../dataset/train/images',
+    'val': '../dataset/val/images',
+    'test': '../dataset/test/images'
 }
 
 output_label_dirs = {
-    'train': './dataset/train/labels',
-    'val': './dataset/val/labels',
-    'test': './dataset/test/labels'
+    'train': '../dataset/train/labels',
+    'val': '../dataset/val/labels',
+    'test': '../dataset/test/labels'
 }
 
 # Ensure output directories exist

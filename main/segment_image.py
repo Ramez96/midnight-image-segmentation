@@ -10,7 +10,7 @@ import numpy as np
 class YourModel(nn.Module):
     def __init__(self, num_classes=9, pretrained=True):
         super(YourModel, self).__init__()
-         # Load the DeepLabV3 model
+         # Load the DeepLabV3 training
         deeplab = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
         
         # Extract the backbone and classifier
@@ -27,20 +27,20 @@ class YourModel(nn.Module):
         return output
 
     def load_weights(self, model_path):
-        """Load pre-trained weights into the model."""
-        # Load the state_dict directly into the model
+        """Load pre-trained weights into the training."""
+        # Load the state_dict directly into the training
         state_dict = torch.load(model_path, map_location=torch.device('cpu'))
         self.load_state_dict(state_dict,strict = False)
 
     def evaluate(self):
-        """Set the model to evaluation mode."""
+        """Set the training to evaluation mode."""
         self.eval()
 
 # ==============================
 # Step 1: Load the Pre-trained DeepLabV3 Model
 # ==============================
 model = YourModel(num_classes=9)
-model.load_weights("./segmentation_model.pth")
+model.load_weights("../model/segmentation_model.pth")
 model.eval()  # Set to evaluation mode
 # ==============================
 # Step 2: Preprocess the Input Image
@@ -52,7 +52,7 @@ preprocess = transforms.Compose([
 ])
 
 # Load an image
-image_path = "./test_image.jpg"  # Replace with your image path
+image_path = "../test_image.jpg"  # Replace with your image path
 input_image = Image.open(image_path).convert("RGB")  # Ensure the image is RGB
 input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
 
@@ -60,7 +60,7 @@ input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
 # Step 3: Perform Segmentation
 # ==============================
 with torch.no_grad():
-    output = model(input_tensor)  # Raw model output is an OrderedDict
+    output = model(input_tensor)  # Raw training output is an OrderedDict
     
 
     # Resize output to match the original image size

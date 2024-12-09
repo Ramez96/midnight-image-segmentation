@@ -53,8 +53,8 @@ class SegmentationDataset(Dataset):
 # Model Creation Function
 # ==============================
 def create_model(num_classes=9, pretrained=True):
-    """Creates and returns a DeepLabV3 model with a ResNet-101 backbone."""
-    print(f"Creating DeepLabV3 model with {num_classes} classes...")
+    """Creates and returns a DeepLabV3 training with a ResNet-101 backbone."""
+    print(f"Creating DeepLabV3 training with {num_classes} classes...")
     model = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
     model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)  # Adjust for num_classes
     return model
@@ -65,7 +65,7 @@ def create_model(num_classes=9, pretrained=True):
 def train_segmentation_model(
     model, train_loader, val_loader, num_epochs=20, learning_rate=1e-4, device=None
 ):
-    """Trains the given segmentation model."""
+    """Trains the given segmentation training."""
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -127,7 +127,7 @@ def get_data_loaders(
     """Creates and returns training and validation DataLoaders."""
     print("Creating data loaders...")
     transform = transforms.Compose([
-        transforms.Resize((240, 320)),  # Resize images to match model input size
+        transforms.Resize((240, 320)),  # Resize images to match training input size
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])

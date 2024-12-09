@@ -24,9 +24,23 @@ def apply_wiener_rgb(image, mysize=1, noise=1e-3):
 
 
 # gaussian blur
-folder_path = "stanford_background_dataset/images"
+folder_path = "../dataset/test/images"
 file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 for file_name in file_list:
-    image = cv2.imread(f"dataset/images/{file_name}")
+    image = cv2.imread(f"../dataset/test/images/{file_name}")
     gaussian_blurred = apply_wiener_rgb(image)
-    cv2.imwrite(f"dataset/preprocessing3/{file_name}", gaussian_blurred)
+    cv2.imwrite(f"../dataset/test/preprocessing3/{file_name}", gaussian_blurred)
+
+folder_path = "../dataset/train/images"
+file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+for file_name in file_list:
+    image = cv2.imread(f"../dataset/train/images/{file_name}")
+    gaussian_blurred = apply_wiener_rgb(image)
+    cv2.imwrite(f"../dataset/train/preprocessing3/{file_name}", gaussian_blurred)
+
+folder_path = "../dataset/val/images"
+file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+for file_name in file_list:
+    image = cv2.imread(f"../dataset/val/images/{file_name}")
+    gaussian_blurred = apply_wiener_rgb(image)
+    cv2.imwrite(f"../dataset/val/preprocessing3/{file_name}", gaussian_blurred)
