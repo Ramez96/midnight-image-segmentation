@@ -40,7 +40,7 @@ class YourModel(nn.Module):
 # Step 1: Load the Pre-trained DeepLabV3 Model
 # ==============================
 model = YourModel(num_classes=9)
-model.load_weights("../model/segmentation_model.pth")
+model.load_weights("../models/segmentation_model.pth")
 model.eval()  # Set to evaluation mode
 # ==============================
 # Step 2: Preprocess the Input Image
