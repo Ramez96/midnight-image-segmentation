@@ -6,11 +6,14 @@ import torch.nn.functional as F
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import random
+
 
 class YourModel(nn.Module):
     def __init__(self, num_classes=9, pretrained=True):
         super(YourModel, self).__init__()
-         # Load the DeepLabV3 training
+        # Load the DeepLabV3 training
         deeplab = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
         
         # Extract the backbone and classifier
@@ -30,47 +33,21 @@ class YourModel(nn.Module):
         """Load pre-trained weights into the training."""
         # Load the state_dict directly into the training
         state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-        self.load_state_dict(state_dict,strict = False)
+        self.load_state_dict(state_dict, strict=False)
 
     def evaluate(self):
         """Set the training to evaluation mode."""
         self.eval()
 
 # ==============================
-# Step 1: Load the Pre-trained DeepLabV3 Model
-# ==============================
-model = YourModel(num_classes=9)
-model.load_weights("../models/segmentation_model.pth")
-model.eval()  # Set to evaluation mode
-# ==============================
-# Step 2: Preprocess the Input Image
-# ==============================
 # Define preprocessing pipeline
+# ==============================
 preprocess = transforms.Compose([
     transforms.Resize((240, 320)),
     transforms.ToTensor()
 ])
 
-# Load an image
-image_path = "../test_image.jpg"  # Replace with your image path
-input_image = Image.open(image_path).convert("RGB")  # Ensure the image is RGB
-input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
-
-# ==============================
-# Step 3: Perform Segmentation
-# ==============================
-with torch.no_grad():
-    output = model(input_tensor)  # Raw training output is an OrderedDict
-    
-
-    # Resize output to match the original image size
-    output_resized = F.interpolate(output, size=(240, 320), mode="bilinear", align_corners=False)
-    predicted_labels = torch.argmax(output_resized, dim=1).squeeze(0).cpu().numpy()
-
-# ==============================
-# Step 4: Visualize the Results
-# ==============================
-# Map the classes to colors
+# Define a function to map classes to colors
 def decode_segmap(segmentation, num_classes=21):
     label_colors = np.array([
         [0, 0, 0],        # Background
@@ -105,20 +82,51 @@ def decode_segmap(segmentation, num_classes=21):
         b[idx] = label_colors[l, 2]
     return np.stack([r, g, b], axis=2)
 
-# Decode segmentation map
-segmentation_map = decode_segmap(predicted_labels)
+# ==============================
+# Load the Model
+# ==============================
+model = YourModel(num_classes=9)
+model.load_weights("../models/noisy.pth")
+model.eval()  # Set to evaluation mode
 
-# Show the original and segmented images
-plt.figure(figsize=(10, 5))
+# ==============================
+# Process All Images in the Directory
+# ==============================
+image_dir = "../dataset/test/preprocessing3"
+output_dir = "../output_labels"
+os.makedirs(output_dir, exist_ok=True)  # Create output directory if it doesn't exist
 
-# Original image
-plt.subplot(1, 2, 1)
-plt.imshow(input_image)
-plt.title("Original Image")
 
-# Segmented image
-plt.subplot(1, 2, 2)
-plt.imshow(segmentation_map)  # Use a colormap for visualization
-plt.title("Segmented Image")
+# Select 10 random images from the directory
+all_images = [img for img in os.listdir(image_dir) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+selected_images = random.sample(all_images, min(len(all_images), 10))
 
-plt.show()
+# Iterate over all images in the directory
+for image_name in selected_images:
+    image_path = os.path.join(image_dir, image_name)
+        
+    # Load and preprocess the image
+    input_image = Image.open(image_path).convert("RGB")
+    original_size = input_image.size  # Save the original size for overlay
+    input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
+
+    # Perform segmentation
+    with torch.no_grad():
+        output = model(input_tensor)
+        output_resized = F.interpolate(output, size=(240, 320), mode="bilinear", align_corners=False)
+        predicted_labels = torch.argmax(output_resized, dim=1).squeeze(0).cpu().numpy()
+
+    # Save the segmentation labels to a text file
+    label_file = os.path.join(output_dir, f"{os.path.splitext(image_name)[0]}_labels.txt")
+    np.savetxt(label_file, predicted_labels, fmt='%d')
+
+    # Create an overlay of the segmentation map on the original image
+    segmentation_map = decode_segmap(predicted_labels)
+    segmentation_map_resized = Image.fromarray(segmentation_map).resize(original_size, Image.BILINEAR)
+    segmentation_overlay = ( 0.5 * np.array(input_image) + 0.5 * np.array(segmentation_map_resized)).astype(np.uint8)
+    
+    # Save the overlay image
+    overlay_path = os.path.join(output_dir, f"{os.path.splitext(image_name)[0]}_overlay.png")
+    Image.fromarray(segmentation_overlay).save(overlay_path)
+
+print("Processing completed. Segmentation labels and maps saved.")
