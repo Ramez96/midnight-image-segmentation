@@ -28,11 +28,39 @@ def add_random_pixels(image, num_pixels):
 
     return noisy_image
 
-folder_path = "dataset/test/preprocessing3"
+def sharpen_image(image):
+    """
+    Sharpens an RGB image.
+
+    Parameters:
+        image (numpy.ndarray): Input image as a NumPy array with 3 channels (RGB).
+
+    Returns:
+        numpy.ndarray: Sharpened RGB image.
+    """
+    if len(image.shape) != 3 or image.shape[2] != 3:
+        raise ValueError("Input image must be an RGB image with 3 channels.")
+
+    # Define a sharpening kernel
+    sharpen_kernel = np.array([[ 0, -1,  0],
+                                [-1,  5, -1],
+                                [ 0, -1,  0]])
+
+    # Apply the kernel to the image
+    sharpened_image = cv2.filter2D(image, -1, sharpen_kernel)
+
+    return sharpened_image
+
+
+
+folder_path = "dataset/test/preprocessing1"
 file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+
 for file_name in file_list:
-    image = cv2.imread(f"dataset/test/preprocessing3/{file_name}")
+    print(file_name)
+    image = cv2.imread(f"dataset/test/preprocessing1/{file_name}")
     
-    filterd = add_random_pixels(image,10000)
-    filterd = gaussian(filterd)
+    #filterd = add_random_pixels(image,10000)
+    #filterd = laplacian_of_gaussian(image)
+    filterd = sharpen_image(image)
     cv2.imwrite(f"dataset/test/preprocessing35/{file_name}", filterd)
