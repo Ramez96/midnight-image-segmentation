@@ -35,14 +35,14 @@ def sharpen_image(image):
 
 
 
-folder_path = "dataset/test/preprocessing1"
+folder_path = "dataset/val/preprocessing1"
 file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 
 for file_name in file_list:
     print(file_name)
-    image = cv2.imread(f"dataset/test/preprocessing1/{file_name}")
+    image = cv2.imread(f"dataset/val/preprocessing1/{file_name}")
     
     #filterd = add_random_pixels(image,10000)
     #filterd = laplacian_of_gaussian(image)
     filterd = sharpen_image(image)
-    cv2.imwrite(f"dataset/test/preprocessing35/{file_name}", filterd)
+    cv2.imwrite(f"dataset/val/preprocessing5/{file_name}", filterd)
