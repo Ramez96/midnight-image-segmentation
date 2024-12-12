@@ -28,11 +28,11 @@ def add_random_pixels(image, num_pixels):
 
     return noisy_image
 
-folder_path = "stanford_background_dataset/images"
+folder_path = "dataset/test/preprocessing3"
 file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 for file_name in file_list:
-    image = cv2.imread(f"stanford_background_dataset/images/{file_name}")
+    image = cv2.imread(f"dataset/test/preprocessing3/{file_name}")
     
     filterd = add_random_pixels(image,10000)
     filterd = gaussian(filterd)
-    cv2.imwrite(f"stanford_background_dataset/preprocessing2/{file_name}", filterd)
+    cv2.imwrite(f"dataset/test/preprocessing35/{file_name}", filterd)
