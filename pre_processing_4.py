@@ -16,18 +16,11 @@ def apply_spf(image):
     [4,  100,  50, 2, 0, 0,  0],
     [100,  4,  10,  4,  1,  0,  0]
 ], dtype=np.float64)
-    psf /= psf.sum()  # Normalize PSF
-    # Get image dimensions
+    psf /= psf.sum()
     height, width, channels = image.shape
-
-    # Create an empty array for the result
     output = np.zeros_like(image, dtype=np.float64)
-
-    # Apply the PSF to each channel separately
     for c in range(channels):
         output[:, :, c] = convolve2d(image[:, :, c], psf, mode='same', boundary='wrap')
-
-    # Clip values to ensure valid pixel range (0-255)
     output = np.clip(output, 0, 255).astype(np.uint8)
 
     return output

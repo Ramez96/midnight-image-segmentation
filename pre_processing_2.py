@@ -7,46 +7,28 @@ def gaussian(image):
 
 def laplacian_of_gaussian(image, kernel_size=9, sigma=0.5):
     log_image = np.zeros_like(image, dtype=np.float32)
-    for i in range(3):  # Process each channel separately
+    for i in range(3): 
         blurred = cv2.GaussianBlur(image[..., i], (kernel_size, kernel_size), sigma)
         log_image[..., i] = cv2.Laplacian(blurred, cv2.CV_64F)
     return np.clip(log_image, 0, 255).astype(np.uint8)
 
 def add_random_pixels(image, num_pixels):
     height, width, channels = image.shape
-
-    # Create a copy of the image to avoid modifying the original
     noisy_image = image.copy()
-
-    # Randomly choose indices for the pixels to modify
     random_y = np.random.randint(0, height, num_pixels)
     random_x = np.random.randint(0, width, num_pixels)
 
-    # Modify the pixels
     for y, x in zip(random_y, random_x):
-        noisy_image[y, x] = np.random.randint(0, 256, size=(3,))  # Random RGB value
+        noisy_image[y, x] = np.random.randint(0, 256, size=(3,)) 
 
     return noisy_image
 
 def sharpen_image(image):
-    """
-    Sharpens an RGB image.
-
-    Parameters:
-        image (numpy.ndarray): Input image as a NumPy array with 3 channels (RGB).
-
-    Returns:
-        numpy.ndarray: Sharpened RGB image.
-    """
     if len(image.shape) != 3 or image.shape[2] != 3:
         raise ValueError("Input image must be an RGB image with 3 channels.")
-
-    # Define a sharpening kernel
     sharpen_kernel = np.array([[ 0, -1,  0],
                                 [-1,  5, -1],
                                 [ 0, -1,  0]])
-
-    # Apply the kernel to the image
     sharpened_image = cv2.filter2D(image, -1, sharpen_kernel)
 
     return sharpened_image
