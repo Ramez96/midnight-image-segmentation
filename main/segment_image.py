@@ -15,22 +15,19 @@ class YourModel(nn.Module):
         # Load the DeepLabV3 training
         deeplab = models.segmentation.deeplabv3_resnet50(pretrained=pretrained)
 
-        # Extract the backbone and classifier
-        self.backbone = deeplab.backbone  # Matches the key names in your .pth file
+        self.backbone = deeplab.backbone  
         self.classifier = deeplab.classifier
 
         # Modify the classifier to match the number of classes
         self.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=1)
 
     def forward(self, x):
-        # Use the backbone and classifier directly
         features = self.backbone(x)
         output = self.classifier(features['out'])
         return output
 
     def load_weights(self, model_path):
         """Load pre-trained weights into the training."""
-        # Load the state_dict directly into the training
         state_dict = torch.load(model_path, map_location=torch.device('cpu'))
         self.load_state_dict(state_dict, strict=False)
 
@@ -38,38 +35,23 @@ class YourModel(nn.Module):
         """Set the training to evaluation mode."""
         self.eval()
 
-# ==============================
-# Define preprocessing pipeline
-# ==============================
 preprocess = transforms.Compose([
     transforms.Resize((240, 320)),
     transforms.ToTensor()
 ])
 
-# Define a function to map classes to colors
-def decode_segmap(segmentation, num_classes=21):
+def decode_segmap(segmentation, num_classes=9):
     label_colors = np.array([
         [0, 0, 0],        # Background
-        [128, 0, 0],      # Aeroplane
-        [0, 128, 0],      # Bicycle
-        [128, 128, 0],    # Bird
-        [0, 0, 128],      # Boat
-        [128, 0, 128],    # Bottle
-        [0, 128, 128],    # Bus
-        [128, 128, 128],  # Car
-        [64, 0, 0],       # Cat
-        [192, 0, 0],      # Chair
-        [64, 128, 0],     # Cow
-        [192, 128, 0],    # Dining Table
-        [64, 0, 128],     # Dog
-        [192, 0, 128],    # Horse
-        [64, 128, 128],   # Motorbike
-        [192, 128, 128],  # Person
-        [0, 64, 0],       # Potted Plant
-        [128, 64, 0],     # Sheep
-        [0, 192, 0],      # Sofa
-        [128, 192, 0],    # Train
-        [0, 64, 128]      # TV/Monitor
+        [128, 0, 0],      # Sky
+        [0, 128, 0],      # Tree
+        [128, 128, 0],    # Road
+        [0, 0, 128],      # Grass
+        [128, 0, 128],    # Water
+        [0, 128, 128],    # Building
+        [128, 128, 128],  # Mountain
+        [64, 0, 0],       # Foreground Objects
+        
     ])
     r = np.zeros_like(segmentation).astype(np.uint8)
     g = np.zeros_like(segmentation).astype(np.uint8)
@@ -84,20 +66,27 @@ def decode_segmap(segmentation, num_classes=21):
 # ==============================
 # Load Models and Test Images
 # ==============================
-image_dir = "../dataset/test/noisy"
+input_base_dir = "../dataset/test/"
 output_base_dir = "../output_labels/"
-os.makedirs(output_base_dir, exist_ok=True)  # Ensure the base output directory exists
+os.makedirs(output_base_dir, exist_ok=True)
 
-# List of .pth files to test
-pth_files = ["../models/noisy2.pth", "../models/blurred.pth", "../models/sharpened.pth"]
+pth_files = ["../models/noisy.pth", "../models/blurred.pth", "../models/sharpened.pth","../models/baseline.pth"]
 
-# Select 10 random images from the directory
-all_images = [img for img in os.listdir(image_dir) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-selected_images = random.sample(all_images, min(len(all_images), 10))
+model_name_1 = os.path.splitext(os.path.basename(pth_files[0]))[0]
+image_dir_1 = os.path.join(input_base_dir, model_name_1)
+all_images_1 = [img for img in os.listdir(image_dir_1) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+selected_images = random.sample(all_images_1, min(len(all_images_1), 10))
 
 for pth_file in pth_files:
     # Extract the model name without the .pth extension
     model_name = os.path.splitext(os.path.basename(pth_file))[0]
+
+    # Determine the corresponding input directory
+    image_dir = os.path.join(input_base_dir, model_name)
+
+    if not os.path.exists(image_dir):
+        print(f"Warning: Input directory for {model_name} does not exist. Skipping.")
+        continue
 
     # Create output directory for this model
     model_output_dir = os.path.join(output_base_dir, model_name)
@@ -107,32 +96,31 @@ for pth_file in pth_files:
     model = YourModel(num_classes=9)
     model.load_weights(pth_file)
     model.eval()  # Set to evaluation mode
-
     for image_name in selected_images:
         image_path = os.path.join(image_dir, image_name)
 
+        if not os.path.exists(image_path):
+            print(f"Warning: {image_name} does not exist in {image_dir}. Skipping.")
+            continue
+
         # Load and preprocess the image
         input_image = Image.open(image_path).convert("RGB")
-        original_size = input_image.size  # Save the original size for overlay
-        input_tensor = preprocess(input_image).unsqueeze(0)  # Add batch dimension
+        original_size = input_image.size  
+        input_tensor = preprocess(input_image).unsqueeze(0)  
 
-        # Perform segmentation
         with torch.no_grad():
             output = model(input_tensor)
             output_resized = F.interpolate(output, size=(240, 320), mode="bilinear", align_corners=False)
             predicted_labels = torch.argmax(output_resized, dim=1).squeeze(0).cpu().numpy()
 
-        # Save the segmentation labels to a text file
-        label_file = os.path.join(model_output_dir, f"{os.path.splitext(image_name)[0]}_labels.txt")
+        label_file = os.path.join(model_output_dir, f"{os.path.splitext(image_name)[0]}.txt")
         np.savetxt(label_file, predicted_labels, fmt='%d')
 
-        # Create an overlay of the segmentation map on the original image
         segmentation_map = decode_segmap(predicted_labels)
         segmentation_map_resized = Image.fromarray(segmentation_map).resize(original_size, Image.BILINEAR)
-        segmentation_overlay = (0.5 * np.array(input_image) + 0.5 * np.array(segmentation_map_resized)).astype(np.uint8)
+        segmentation_overlay = (0.5 * np.array(input_image) + 0.5 * np.array(segmentation_map_resized)).astype(np.uint8) # Create an overlay of the segmentation map on the original image
 
         # Save the overlay image
         overlay_path = os.path.join(model_output_dir, f"{os.path.splitext(image_name)[0]}_overlay.png")
         Image.fromarray(segmentation_overlay).save(overlay_path)
-
 print("Processing completed. Outputs saved in respective directories.")

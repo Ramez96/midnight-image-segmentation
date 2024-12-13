@@ -171,3 +171,5 @@ stanford_background_dataset/
 .idea
 dataset/*
 dataset.zip
+
+presentation/*
