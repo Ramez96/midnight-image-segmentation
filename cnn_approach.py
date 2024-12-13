@@ -25,7 +25,7 @@ def display_segments(text_file, path=None):
 
 
 if __name__ == "__main__":
-    img = display_segments(None, path="stanford_background_dataset/labels/0000087.layers.txt")
+    img = display_segments(None, path="stanford_background_dataset/layers/0001677.layers.txt")
     cv2.imshow('Image', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
