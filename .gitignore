@@ -165,7 +165,13 @@ cython_debug/
 
 ### own 
 
-.jpg
+*.jpg
 stanford_background_dataset/
 *.pdf
 .idea
+models/
+*.zip
+dataset/
+dataset5/
+training/
+*.txt
