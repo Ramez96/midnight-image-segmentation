@@ -175,3 +175,4 @@ dataset/
 dataset5/
 training/
 *.txt
+preprocessing*/
